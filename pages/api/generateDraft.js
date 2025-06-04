@@ -1,4 +1,5 @@
-import cheerio from 'cheerio';
+const cheerio = require('cheerio');
+const fetch = require('node-fetch');
 
 const ACT_MAP = {
   rent: [
@@ -16,37 +17,51 @@ const ACT_MAP = {
 async function fetchIndiaCodeSections(urls) {
   const texts = [];
   for (const url of urls) {
-    const html = await fetch(url).then(res => res.text());
-    const $ = cheerio.load(html);
-    const sectionText = $('.act-section, .content-area, .act-body').text().trim();
-    texts.push(sectionText || 'Section not found.');
+    try {
+      const html = await fetch(url).then(res => res.text());
+      const $ = cheerio.load(html);
+      const sectionText = $('.act-section, .content-area, .act-body').text().trim();
+      texts.push(sectionText || 'Section not found.');
+    } catch (e) {
+      texts.push('Section not found (fetch error).');
+    }
   }
   return texts.join('\n\n');
 }
 
-export default async function handler(req, res) {
-  const { docType, name, address, amount } = req.body;
-  const legalContent = await fetchIndiaCodeSections(ACT_MAP[docType] || []);
-  const prompt = `You are an Indian legal document drafting assistant. Create a ${docType.replace('_', ' ')} between ${name} residing at ${address}, for INR ${amount}.
+module.exports = async function handler(req, res) {
+  try {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method Not Allowed" });
+      return;
+    }
 
-Reference and cite the following legal provisions wherever appropriate:
-${legalContent}
+    const { docType, name, address, amount } = req.body || {};
+    if (!docType || !name || !address || !amount) {
+      res.status(400).json({ error: "Missing required fields." });
+      return;
+    }
 
-Format the draft professionally and include relevant clauses based on Indian legal practice.`;
+    const legalContent = await fetchIndiaCodeSections(ACT_MAP[docType] || []);
+    const prompt = `You are an Indian legal document drafting assistant. Create a ${docType.replace('_', ' ')} between ${name} residing at ${address}, for INR ${amount}.\n\nReference and cite the following legal provisions wherever appropriate:\n${legalContent}\n\nFormat the draft professionally and include relevant clauses based on Indian legal practice.`;
 
-  const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-1106-preview',
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+    const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-1106-preview',
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
 
-  const gptData = await gptRes.json();
-  const text = gptData.choices?.[0]?.message?.content || 'No draft generated.';
-  res.status(200).json({ text });
+    const gptData = await gptRes.json();
+    const text = gptData.choices?.[0]?.message?.content || 'No draft generated.';
+    res.status(200).json({ text });
+  } catch (err) {
+    console.error("API Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 }
