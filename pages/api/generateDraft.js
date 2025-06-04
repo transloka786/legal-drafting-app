@@ -58,6 +58,7 @@ module.exports = async function handler(req, res) {
     });
 
     const gptData = await gptRes.json();
+    console.log("GPT RAW RESPONSE:", JSON.stringify(gptData, null, 2));
     const text = gptData.choices?.[0]?.message?.content || 'No draft generated.';
     res.status(200).json({ text });
   } catch (err) {
