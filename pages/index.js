@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
-import DocumentForm from '../components/DocumentForm';
-import DocumentPreview from '../components/DocumentPreview';
-import { generateDraft } from '../lib/openai';
+// pages/index.js
+
+import React, { useState } from "react";
+import DocumentForm from "../components/DocumentForm";
+import DocumentPreview from "../components/DocumentPreview";
 
 export default function Home() {
-  const [draftContent, setDraftContent] = useState('');
+  const [draftContent, setDraftContent] = useState("");
 
   async function handleGenerate(variables) {
     try {
-      const generated = await generateDraft(variables);
-      setDraftContent(generated);
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(variables),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Server error:", err);
+        alert("Failed to generate draft. See console for details.");
+        return;
+      }
+
+      const { text } = await res.json();
+      setDraftContent(text);
     } catch (error) {
-      console.error(error);
-      alert('Error generating draft. Please check console for details.');
+      console.error("Client fetch error:", error);
+      alert("Error generating draft. Please check console for details.");
     }
   }
 
