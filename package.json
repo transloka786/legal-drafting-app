@@ -1,0 +1,23 @@
+{
+  "name": "legal-drafter-ui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "^3.3.2",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.5",
+    "@shadcn/ui": "latest",
+    "lucide-react": "^0.259.0",
+    "openai": "^4.0.0",
+    "docx": "^8.0.0",
+    "file-saver": "^2.0.5"
+  }
+}

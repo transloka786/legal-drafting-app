@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom utility to enforce A4 preview (210mm x 297mm at 96dpi ~ 794px x 1123px) */
+.a4 {
+  width: 794px;
+  min-height: 1123px;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: auto;
+  padding: 2rem;
+}
