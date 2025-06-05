@@ -1,33 +1,42 @@
-import { generateDraft } from '../../lib/openai';
-import { Packer, Paragraph, TextRun, Document as DocxDocument } from 'docx';
+// pages/api/generate.js
+
+import OpenAI from "openai";
+
+// Instantiate your v5-style OpenAI client on the server:
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
-  const variables = req.body;
+
   try {
-    const draftText = await generateDraft(variables);
-    // Build DOCX
-    const doc = new DocxDocument({
-      sections: [
-        {
-          properties: { page: { size: { orientation: 'portrait', width: 11906, height: 16838 } } },
-          children: [],
-        },
-      ],
+    const variables = req.body;
+
+    // Build the same prompt as before:
+    const prompt = `You are a highly qualified Indian lawyer. Using the following input variables, generate a formal legal draft in plain text. Ensure formatting suitable for A4 print. Variables:
+${Object.entries(variables)
+  .map(([key, value]) => `${key}: ${value}`)
+  .join("\n")}`;
+
+    // Call text-davinci-003:
+    const response = await openai.completions.create({
+      model: "text-davinci-003",
+      prompt,
+      max_tokens: 2000,
+      temperature: 0.3,
+      top_p: 1.0,
+      frequency_penalty: 0,
+      presence_penalty: 0,
     });
-    draftText.split('\n').forEach((line) => {
-      doc.sections[0].children.push(
-        new Paragraph({ children: [new TextRun({ text: line })] })
-      );
-    });
-    const buffer = await Packer.toBuffer(doc);
-    res.setHeader('Content-Disposition', 'attachment; filename=legal-draft.docx');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.send(buffer);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+
+    // Extract the generated text:
+    const draftText = response.choices[0].text.trim();
+    return res.status(200).json({ text: draftText });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
