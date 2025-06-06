@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+// components/DocumentForm.jsx
+
+import React, { useState } from "react";
 
 export default function DocumentForm({ onGenerate }) {
   const [formData, setFormData] = useState({
-    partyA: '',
-    partyB: '',
-    contractDate: '',
-    agreementType: '',
-    jurisdiction: 'India',
-    additionalNotes: '',
+    partyA: "",
+    partyB: "",
+    contractDate: "",
+    agreementType: "",
+    jurisdiction: "India",
+    additionalNotes: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +19,7 @@ export default function DocumentForm({ onGenerate }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log("🖊️ DocumentForm.handleSubmit – formData:", formData);
     setLoading(true);
     await onGenerate(formData);
     setLoading(false);
@@ -102,7 +105,7 @@ export default function DocumentForm({ onGenerate }) {
             <option value="Delhi">Delhi</option>
             <option value="Maharashtra">Maharashtra</option>
             <option value="Karnataka">Karnataka</option>
-            {/* ... add more Indian states/regions as needed */}
+            {/* …other states if needed */}
           </select>
         </div>
 
@@ -128,7 +131,7 @@ export default function DocumentForm({ onGenerate }) {
           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           disabled={loading}
         >
-          {loading ? 'Generating...' : 'Generate Draft'}
+          {loading ? "Generating…" : "Generate Draft"}
         </button>
       </div>
     </form>
