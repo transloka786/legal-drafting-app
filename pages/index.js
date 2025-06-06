@@ -1,3 +1,4 @@
+// pages/index.js
 import React, { useState } from "react";
 import DocumentForm from "../components/DocumentForm";
 import DocumentPreview from "../components/DocumentPreview";
@@ -6,28 +7,35 @@ export default function Home() {
   const [draftContent, setDraftContent] = useState("");
 
   async function handleGenerate(variables) {
+    console.log("🔔 handleGenerate called with:", variables);
+
     try {
-      // Client sends a POST to the serverless API route
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(variables),
       });
+      console.log("📡 /api/generate responded with status:", res.status);
 
       if (!res.ok) {
-        // Show any JSON error returned by the server
-        const err = await res.json();
-        console.error("Server error:", err);
-        alert("Failed to generate draft. See console for details.");
+        let errMsg = "<no JSON>";
+        try {
+          const errJson = await res.json();
+          errMsg = JSON.stringify(errJson);
+        } catch (e) {
+          errMsg = "<failed to parse JSON>";
+        }
+        console.error("⚠️ Server returned non-200:", errMsg);
+        alert("Failed to generate draft. Check console for details.");
         return;
       }
 
-      // If OK, response JSON is { text: "…generated draft…" }
       const { text } = await res.json();
+      console.log("✅ Received draft text (first 100 chars):", text.substring(0, 100));
       setDraftContent(text);
-    } catch (error) {
-      console.error("Client fetch error:", error);
-      alert("Error generating draft. Please check console for details.");
+    } catch (fetchError) {
+      console.error("❌ Client fetch error:", fetchError);
+      alert("Error generating draft. Check browser console for details.");
     }
   }
 
